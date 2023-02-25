@@ -39,7 +39,7 @@ public:
             key.clear();
             return input.size()==2;
         case 'b': // wheel pos given, hard
-            return input.size()==3 
+            return input.size()==3
             && input.at(1).length()==1
             && wheel_comb();
         case 'c': // key given, easy
@@ -55,6 +55,5 @@ public:
             return false;
         }
     }
-
 
 };

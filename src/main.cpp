@@ -14,20 +14,24 @@ int main(int argc, char* argv[])
                 switch (p.mode)
                 {
                 case 'a':
+                    em.decrypt(p.msg);
+                    break;
                 case 'b':
+                    em.decrypt(p.comb, p.msg);
+                    break;
                 case 'c':
-                    std::fprintf(stderr, "TODO\n");
+                    em.decrypt(p.key, p.msg);
                     break;
                 case 'd':
-                    line = em.decrypt(p.key, p.comb, p.msg);
+                    em.decrypt(p.key, p.comb, p.msg);
                     break;
                 case 'e':
-                    line = em.encrypt(p.key, p.comb, p.msg);
+                    em.encrypt(p.key, p.comb, p.msg);
                     break;
                 default:
                     assert(false);
                 }
-                std::cout << line << std::endl;
+                std::cout << p.msg << std::endl;
             }
             else{
                 std::fprintf(stderr,
@@ -36,10 +40,11 @@ int main(int argc, char* argv[])
         }
     }
     else
-    {// backward, brute-force cracking
-        std::vector<std::string> arguments(argv + 1, argv + argc);
-        // std::cout << em.encrypt("HOT", 0, "COMEBACKSOON") << std::endl;
-        // std::cout << em.decrypt("HOT", 0, "Q96YRBQJD99C") << std::endl;
+    {// direct input are cypher
+        assert(argc == 2);
+        std::string cypher(argv[1]);
+        em.decrypt(cypher);
+        std::cout << cypher;
     }
     return 0;
 }

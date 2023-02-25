@@ -4,6 +4,7 @@
 #include<string>
 #include<vector>
 #include<array>
+#include<set>
 
 using std::array, std::string, std::vector;
 
@@ -15,17 +16,17 @@ class Enigma
     enum wheel { ABC, ACB, BAC, BCA, CAB, CBA };
     std::unordered_map<string, array<array<int,3>, CBA+1>> lookup_table;
     const int teeth = wA.length();
-    string const *wl, *wm, *wr; 
+    string const *wl, *wm, *wr;
 
     int modulo(int a) { return (teeth + (a % teeth)) % teeth; }
-    
+
     auto& load_state(string& key, int wheel_pos)
     {
         assert(lookup_table.find(key) != lookup_table.end());
         assert(put_wheel(wheel_pos));
         return lookup_table[key][wheel_pos];
     }
-    
+
     bool put_wheel(int comb)
     {
         if(comb<(int)ABC || comb>(int)CBA){
@@ -82,8 +83,8 @@ class Enigma
 public:
     Enigma()
     {
-        assert(teeth == wB.length());
-        assert(teeth == wC.length());
+        assert(teeth == (int)wB.length());
+        assert(teeth == (int)wC.length());
         lookup_table.reserve(teeth * teeth * teeth);
         for(int comb=ABC; comb<=CBA; comb++){
             assert(put_wheel(comb));
@@ -100,31 +101,74 @@ public:
         wl = nullptr; wm = nullptr; wr = nullptr;
     }
 
-    string encrypt(string key, int wheel_pos, string msg)
+    void encrypt(string key, int wheel_pos, string& msg)
     {
         if(!put_wheel(wheel_pos) || !validate(key) || !verify(msg))
-            return "";
+            return;
         auto state = load_state(key, wheel_pos);
         string const* readers[2] = {wl, wm};
-        string cypher;
-        for(int p=0; p<msg.length(); p++){
+        for(int p=0; p<(int)msg.length(); p++){
             rotate(2, state, wr->find_first_of(msg.at(p)));
-            cypher += readers[p%2]->at(state[p%2]);
+            msg.at(p) = readers[p%2]->at(state[p%2]);
         }
-        return cypher;
     }
 
-    string decrypt(string key, int wheel_pos, string msg)
+    void decrypt(string key, int wheel_pos, string& msg)
     {
         if(!put_wheel(wheel_pos) || !validate(key) || !verify(msg))
-            return "";
+            return;
         auto state = load_state(key, wheel_pos);
         string const* readers[2] = {wl, wm};
-        string plaintext;
-        for(int p=0; p<msg.length(); p++){
+        for(int p=0; p<(int)msg.length(); p++){
             rotate(p%2, state, readers[p%2]->find_first_of(msg.at(p)));
-            plaintext += wr->at(state[2]);
+            msg.at(p) = wr->at(state[2]);
         }
-        return plaintext;
     }
+
+    void decrypt(string key, string& msg)
+    {
+        if(!validate(key) || !verify(msg)) return;
+        string plaintext;
+        plaintext.reserve((1+CBA)*(1+msg.length()));
+        for(int wheel_pos=(int)ABC; wheel_pos<=(int)CBA; wheel_pos++){
+            string local(msg);
+            decrypt(key, wheel_pos, local);
+            plaintext += local + '\n';
+        }
+        msg = plaintext;
+        msg.pop_back();
+    }
+
+    void decrypt(int wheel_pos, string& msg)
+    {
+        if(!put_wheel(wheel_pos) || ! verify(msg)) return;
+        std::set<string> bucket;
+        for(auto& k : lookup_table){
+            string local(msg);
+            decrypt(k.first, wheel_pos, local);
+            bucket.insert(local);
+        }
+        msg.reserve((1+msg.length()) * bucket.size());
+        msg.clear();
+        for(auto& m : bucket) msg += (m + '\n');
+        msg.pop_back();
+    }
+
+    void decrypt(string& msg)
+    {
+        if(!verify(msg)) return;
+        std::set<string> bucket;
+        for(auto& k : lookup_table){
+            for(int wheel_pos=(int)ABC; wheel_pos<=(int)CBA; wheel_pos++){
+                string local(msg);
+                decrypt(k.first, wheel_pos, local);
+                bucket.insert(local);
+            }
+        }
+        msg.reserve((1+msg.length()) * bucket.size());
+        msg.clear();
+        for(auto& m : bucket) msg += (m + '\n');
+        msg.pop_back();
+    }
+
 };
