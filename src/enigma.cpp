@@ -143,10 +143,12 @@ public:
     {
         if(!put_wheel(wheel_pos) || ! verify(msg)) return;
         std::set<string> bucket;
+        auto expect = teeth*teeth; // 1369
         for(auto& k : lookup_table){
             string local(msg);
             decrypt(k.first, wheel_pos, local);
             bucket.insert(local);
+            if(bucket.size()==(size_t)expect) break;
         }
         msg.reserve((1+msg.length()) * bucket.size());
         msg.clear();
@@ -158,11 +160,13 @@ public:
     {
         if(!verify(msg)) return;
         std::set<string> bucket;
+        auto expect = teeth*teeth*(1+CBA); // 8214
         for(auto& k : lookup_table){
             for(int wheel_pos=(int)ABC; wheel_pos<=(int)CBA; wheel_pos++){
                 string local(msg);
                 decrypt(k.first, wheel_pos, local);
                 bucket.insert(local);
+                if(bucket.size()==(size_t)expect) break;
             }
         }
         msg.reserve((1+msg.length()) * bucket.size());
