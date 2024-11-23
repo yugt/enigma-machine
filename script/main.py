@@ -1,15 +1,36 @@
-from samson.analyzers.english_analyzer import EnglishAnalyzer
-import subprocess, sys
+from enigma import Enigma
+import readline
 
-analyzer = EnglishAnalyzer()
-def crack_one(c):
-	return (c, analyzer.analyze(bytearray(c)))
+def main():
+    enigma = Enigma()
+    enigma.help()
 
-def crack(cypher, top=1):
-	return [(cypher, p[0].decode(), p[1])
-	 	for p in sorted([ crack_one(c) for c in
-		subprocess.run(['./build/enigma', cypher], stdout=subprocess.PIPE)\
-		.stdout.split(b'\n')], key=lambda tup: tup[1])[-top:]]
+    command_handlers = {
+        'a': enigma.all,
+        'b': enigma.hint_wheel,
+        'c': enigma.hint_key,
+        'd': enigma.decrypt,
+        'e': enigma.encrypt,
+        'q': lambda _: exit()
+    }
 
-for cypher in sys.stdin:
-	[ print(c,t,s) for (c,t,s) in crack(cypher.rstrip()) ]
+    while True:
+        try:
+            user_input = input("Enigma> ").strip().split()
+        except EOFError:
+            print("\nExiting...")
+            break
+        if not user_input:
+            continue
+
+        command = user_input[0]
+        args = user_input[1:]
+
+        handler = command_handlers.get(command)
+        if handler:
+            handler(args)
+        else:
+            enigma.help()
+
+if __name__ == "__main__":
+    main()
