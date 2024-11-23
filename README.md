@@ -27,8 +27,8 @@ The CLI supports the following commands:
 
 ### Example
 
-```sh
-$ python3 main.py
+```bash
+$ python3 script/main.py
 Enigma interactive mode
 usage: 
 a: cyphertext (decrypt 6 * 37^2 times)
